@@ -1,0 +1,4 @@
+apiVersion: config.cicd.tess.io/v1alpha2
+kind: KubectlConfiguration
+paths:
+- examples/helloworld/configmap.yaml
