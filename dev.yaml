@@ -1,0 +1,364 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-controller
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: release-admission
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tess:controller:release-controller
+  namespace: kube-system
+rules:
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - list
+  - watch
+  - get
+  - create
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - configmaps
+  verbs:
+  - list
+  - watch
+  - get
+  - create
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: release-admission
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - watch
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tess:controller:release-controller
+rules:
+- apiGroups:
+  - fleet.crd.tess.io
+  resources:
+  - releases
+  - releases/status
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - create
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - controllerrevisions
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - list
+  - watch
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: release-admission
+rules:
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: release-admission-caller
+rules:
+- apiGroups:
+  - admission.fleet.tess.io
+  resources:
+  - mutatings
+  - validatings
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: namespace-admin
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tess:controller:release-controller
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tess:controller:release-controller
+subjects:
+- kind: ServiceAccount
+  name: release-controller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: release-admission
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: release-admission
+subjects:
+- kind: ServiceAccount
+  name: release-admission
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tess:controller:release-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tess:controller:release-controller
+subjects:
+- kind: ServiceAccount
+  name: release-controller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: release-admission
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: release-admission
+subjects:
+- kind: ServiceAccount
+  name: release-admission
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: release-admission-caller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: release-admission-caller
+subjects:
+- kind: User
+  name: system:anonymous
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: releasecontroller
+  name: releasecontroller
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: releasecontroller
+  template:
+    metadata:
+      annotations:
+        io.sherlock.logs/namespace: tess-controlplane
+      labels:
+        k8s-app: releasecontroller
+    spec:
+      containers:
+      - args:
+        - --cluster=kind
+        - --v=4
+        - --alsologtostderr
+        - --git-sync-image=local.registry/ebay/releaser/git-sync:{{VERSION}}
+        - --approver-image=local.registry/ebay/releaser/approver:{{VERSION}}
+        - --image-maps=kubectl=local.registry/ebay/releaser/kubectl:{{VERSION}}
+        - --image-maps=tess=local.registry/ebay/releaser/tess:{{VERSION}}
+        - --image-maps=helm=local.registry/ebay/releaser/helm:{{VERSION}}
+        - --image-pull-policy=IfNotPresent
+        - --env-vars=CLUSTER_TYPE=${CLUSTER_TYPE}
+        - --env-vars=ENV=${ENV}
+        - --env-vars=ZONE=${ZONE}
+        - --env-vars=REGION=${REGION}
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        envFrom:
+          - configMapRef:
+              name: cluster-info
+        image: local.registry/ebay/releaser:{{VERSION}}
+        imagePullPolicy: IfNotPresent
+        name: release
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      serviceAccountName: release-controller
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: release-admission-server
+  namespace: kube-system
+data:
+  server.crt: {{CERT}}
+  server.key: {{KEY}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: release-admission
+  name: release-admission
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: release-admission
+  template:
+    metadata:
+      annotations:
+        io.sherlock.logs/namespace: tess-controlplane
+      labels:
+        k8s-app: release-admission
+    spec:
+      containers:
+      - args:
+        - --v=4
+        - --alsologtostderr
+        - --tls-cert-file=/etc/release-admission/server.crt
+        - --tls-private-key-file=/etc/release-admission/server.key
+        - --secure-port
+        - "6443"
+        command:
+        - admission
+        image: local.registry/ebay/releaser:{{VERSION}}
+        imagePullPolicy: IfNotPresent
+        name: scheduler
+        volumeMounts:
+        - name: config
+          mountPath: /etc/release-admission
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      serviceAccountName: release-admission
+      volumes:
+      - name: config
+        secret:
+          secretName: release-admission-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-admission
+  namespace: kube-system
+spec:
+  type: ClusterIP
+  selector:
+    k8s-app: release-admission
+  ports:
+  - name: https
+    port: 443
+    targetPort: 6443
+    protocol: TCP
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: generic.admission.fleet.tess.io
+webhooks:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    caBundle: {{CA_BUNDLE}}
+    service:
+      namespace: kube-system
+      name: release-admission
+      path: /apis/admission.fleet.tess.io/v1alpha1/mutatings
+  failurePolicy: Fail
+  matchPolicy: Exact
+  name: generic.admission.fleet.tess.io
+  sideEffects: None
+  rules:
+  - apiGroups:
+    - fleet.crd.tess.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - releases
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-info
+  namespace: kube-system
+data:
+    CLUSTER_TYPE: kind
+    ENV: kind
+    ZONE: kind
+    REGION: kind

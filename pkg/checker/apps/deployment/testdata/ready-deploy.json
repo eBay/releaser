@@ -1,0 +1,233 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "Deployment",
+  "metadata": {
+    "annotations": {
+      "application.tess.io/id": "urn:ebay-marketplace-consumerid:df7a66a7-e3eb-4ed4-84a3-59e853580fd6",
+      "application.tess.io/name": "tesshub",
+      "deployment.kubernetes.io/revision": "7"
+    },
+    "creationTimestamp": "2019-06-25T09:53:25Z",
+    "generation": 15,
+    "labels": {
+      "app": "beacon",
+      "application.tess.io/name": "tesshub",
+      "applicationinstance.tess.io/name": "beacon-deployments",
+      "environment.tess.io/name": "dev"
+    },
+    "name": "beacon",
+    "namespace": "hub",
+    "resourceVersion": "4587899462",
+    "selfLink": "/apis/apps/v1/namespaces/hub/deployments/beacon",
+    "uid": "1350e9a5-972f-11e9-8aa0-74dbd180c0ec"
+  },
+  "spec": {
+    "progressDeadlineSeconds": 600,
+    "replicas": 5,
+    "revisionHistoryLimit": 10,
+    "selector": {
+      "matchLabels": {
+        "app": "beacon"
+      }
+    },
+    "strategy": {
+      "rollingUpdate": {
+        "maxSurge": "25%",
+        "maxUnavailable": "25%"
+      },
+      "type": "RollingUpdate"
+    },
+    "template": {
+      "metadata": {
+        "creationTimestamp": null,
+        "labels": {
+          "app": "beacon",
+          "applicationinstance.tess.io/name": "beacon-deployments"
+        }
+      },
+      "spec": {
+        "affinity": {
+          "podAntiAffinity": {
+            "preferredDuringSchedulingIgnoredDuringExecution": [
+              {
+                "podAffinityTerm": {
+                  "labelSelector": {
+                    "matchExpressions": [
+                      {
+                        "key": "app",
+                        "operator": "In",
+                        "values": [
+                          "beacon"
+                        ]
+                      }
+                    ]
+                  },
+                  "topologyKey": "failure-domain.tess.io/network-device"
+                },
+                "weight": 100
+              }
+            ]
+          }
+        },
+        "containers": [
+          {
+            "args": [
+              "serve",
+              "/etc/beacon/config.yaml"
+            ],
+            "image": "local.hub.tess.io/tess/beacon:v0.8.1",
+            "imagePullPolicy": "Always",
+            "livenessProbe": {
+              "failureThreshold": 3,
+              "initialDelaySeconds": 5,
+              "periodSeconds": 30,
+              "successThreshold": 1,
+              "tcpSocket": {
+                "port": 6443
+              },
+              "timeoutSeconds": 1
+            },
+            "name": "beacon",
+            "readinessProbe": {
+              "failureThreshold": 3,
+              "httpGet": {
+                "path": "/metrics",
+                "port": 5001,
+                "scheme": "HTTP"
+              },
+              "initialDelaySeconds": 5,
+              "periodSeconds": 30,
+              "successThreshold": 1,
+              "timeoutSeconds": 1
+            },
+            "resources": {
+              "limits": {
+                "cpu": "2",
+                "memory": "5Gi"
+              },
+              "requests": {
+                "cpu": "1",
+                "memory": "2560Mi"
+              }
+            },
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/ssl",
+                "name": "etcssl"
+              },
+              {
+                "mountPath": "/etc/pki",
+                "name": "etcpki"
+              },
+              {
+                "mountPath": "/etc/beacon",
+                "name": "config"
+              },
+              {
+                "mountPath": "/var/beacon",
+                "name": "varbeacon"
+              }
+            ]
+          }
+        ],
+        "dnsPolicy": "Default",
+        "imagePullSecrets": [
+          {
+            "name": "public-anonymous-pull-secret"
+          }
+        ],
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "securityContext": {},
+        "terminationGracePeriodSeconds": 30,
+        "volumes": [
+          {
+            "hostPath": {
+              "path": "/etc/ssl",
+              "type": ""
+            },
+            "name": "etcssl"
+          },
+          {
+            "hostPath": {
+              "path": "/etc/pki",
+              "type": ""
+            },
+            "name": "etcpki"
+          },
+          {
+            "emptyDir": {
+              "sizeLimit": "50Gi"
+            },
+            "name": "varbeacon"
+          },
+          {
+            "name": "config",
+            "projected": {
+              "defaultMode": 420,
+              "sources": [
+                {
+                  "secret": {
+                    "items": [
+                      {
+                        "key": "config.yaml",
+                        "path": "config.yaml"
+                      }
+                    ],
+                    "name": "beacon-config"
+                  }
+                },
+                {
+                  "secret": {
+                    "items": [
+                      {
+                        "key": "private.der",
+                        "path": "pki/private.der"
+                      },
+                      {
+                        "key": "tls-cert.pem",
+                        "path": "pki/tls-cert.pem"
+                      },
+                      {
+                        "key": "tls-key.pem",
+                        "path": "pki/tls-key.pem"
+                      }
+                    ],
+                    "name": "beacon-pki"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "status": {
+    "availableReplicas": 5,
+    "conditions": [
+      {
+        "lastTransitionTime": "2019-06-25T09:53:25Z",
+        "lastUpdateTime": "2020-03-12T05:40:39Z",
+        "message": "ReplicaSet \"beacon-85d5cbccc6\" has successfully progressed.",
+        "reason": "NewReplicaSetAvailable",
+        "status": "True",
+        "type": "Progressing"
+      },
+      {
+        "lastTransitionTime": "2020-03-22T08:59:36Z",
+        "lastUpdateTime": "2020-03-22T08:59:36Z",
+        "message": "Deployment has minimum availability.",
+        "reason": "MinimumReplicasAvailable",
+        "status": "True",
+        "type": "Available"
+      }
+    ],
+    "observedGeneration": 15,
+    "readyReplicas": 5,
+    "replicas": 5,
+    "updatedReplicas": 5
+  }
+}

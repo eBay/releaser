@@ -1,0 +1,4 @@
+FROM golang:1.19.7
+WORKDIR /go/src/github.com/ebay/releaser
+ADD . .
+RUN GO111MODULE=off go install github.com/ebay/releaser/cmd/...

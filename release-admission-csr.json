@@ -1,0 +1,16 @@
+{
+  "CN": "release-admission.kube-system.svc",
+  "names": [
+    {
+      "C": "US",
+      "L": "San Jose",
+      "O": "CICD.",
+      "OU": "Tess",
+      "ST": "California"
+    }
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  }
+}

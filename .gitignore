@@ -1,0 +1,10 @@
+bazel-*
+.idea/
+
+# generated certs
+ca-key.pem
+ca.csr
+ca.pem
+release-admission-server-key.pem
+release-admission-server.pem
+release-admission-server.csr

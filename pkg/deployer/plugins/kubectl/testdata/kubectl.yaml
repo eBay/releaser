@@ -1,0 +1,27 @@
+apiVersion: config.cicd.tess.io/v1alpha2
+kind: KubectlConfiguration
+paths:
+- releases/templates
+prune:
+  labels:
+    applier: kubectl-apply-tessops
+  skipList:
+  - ResourceQuota
+  # applicationinstances pruning is probably always going to fail, and is
+  # unexpected in most cases.
+  - ApplicationInstance.apps.tess.io
+  # https://github.corp.ebay.com/tess/tessops/pull/3354
+  - Release.fleet.crd.tess.io/monitoring/sherlockio-agents
+template:
+  configMapRefs:
+  - name: pillars
+  secretRefs:
+  - name: pillars
+  values:
+  - releases/values/global
+  - releases/values/regions/${REGION}
+  - releases/values/zones/${ZONE}
+  - releases/values/envs/${ENV}
+  - releases/values/clustertypes/${CLUSTER_TYPE}
+  - releases/values/purposes/${PURPOSE}
+  - releases/values/clusters/${CLUSTER}

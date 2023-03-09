@@ -1,0 +1,178 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: releaseevents.fleet.crd.tess.io
+spec:
+  group: fleet.crd.tess.io
+  names:
+    kind: ReleaseEvent
+    listKind: ReleaseEventList
+    plural: releaseevents
+    shortNames:
+    - revent
+    singular: releaseevent
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.calendar
+      name: Calendar
+      type: string
+    - format: date-time
+      jsonPath: .status.time
+      name: Time
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: ReleaseEvent describes an event with specific parameters. This
+          event runs through all the Pipelines as specified in the corresponding ReleaseCalendar.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ReleaseEventSpec describes the ReleaseEvent details.
+            properties:
+              calendar:
+                description: Calendar is the name of ReleaseCalendar this event belongs
+                  to.
+                type: string
+              group:
+                description: Group is a name to identify the group this event belongs
+                  to. If there are multiple events belong to the same group, a leader
+                  will be elected.
+                type: string
+              note:
+                description: Note is additional information that people can put on.
+                type: string
+              params:
+                description: Params is a list of Name-Value pairs that should be passed
+                  to all of PipelineRuns.
+                items:
+                  description: Param is a key value pair which can consumed in PipelineRuns
+                    for all Release Events.
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
+              paused:
+                description: Paused when set to true, the execution of this Event
+                  should stop. All the running PipelineRuns will still run till completion.
+                type: boolean
+              runAfter:
+                description: RunAfter declares a list of precedent events this event
+                  should run after. This supersedes the After field.
+                items:
+                  description: ReleaseEventRunAfter specifies how the current event
+                    should run after another one.
+                  properties:
+                    name:
+                      description: Name is name of the event it should wait for.
+                      type: string
+                    pipeline:
+                      description: Pipeline is the name of pipeline it should wait
+                        for.
+                      type: string
+                    timeOffset:
+                      description: 'TimeOffset specifies when this event should start.
+                        There are two formats supported: 1. "6h": This means 6 hours
+                        after. 2. "24h,10:00": This means 10:00 at the next day. This
+                        must be a future time (A positive time duration). Note: The
+                        offset is relative to the status.time of another release event.'
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              time:
+                description: Time is the execution time scheduled for this event.
+                format: date-time
+                type: string
+            required:
+            - calendar
+            type: object
+          status:
+            description: ReleaseEventStatus describes the current status of this ReleaseEvent.
+            properties:
+              leader:
+                description: Leader is the name of release event which acts as the
+                  group leader.
+                type: string
+              phase:
+                description: Phase describes the current event phase.
+                type: string
+              pipelineRuns:
+                description: PipelineRuns describes all the executed PipelineRun status.
+                items:
+                  description: ReleaseEventPipelineRun describes a specific PipelineRun
+                    status in current ReleaseEvent.
+                  properties:
+                    cluster:
+                      description: Cluster denotes where the PipelineRun is created.
+                      type: string
+                    completionTime:
+                      description: CompletionTime describes the completion time of
+                        this PipelineRun.
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name is the name of PipelineRun that are created.
+                      type: string
+                    pipeline:
+                      description: Pipeline is the name of Pipeline stage (as specified
+                        from ReleaseCalendar).
+                      type: string
+                    results:
+                      additionalProperties:
+                        type: string
+                      description: Results describes the PipelineRun results.
+                      type: object
+                    startTime:
+                      description: StartTime describes the start time of this PipelineRun.
+                      format: date-time
+                      type: string
+                    status:
+                      description: Status describes the PipelineRun status.
+                      type: string
+                  required:
+                  - name
+                  - pipeline
+                  - status
+                  type: object
+                type: array
+              time:
+                description: Time is the estimated or actual (if the event is already
+                  Running) execution time for this event.
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,199 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: prometheus
+  namespace: ufes-monitoring
+  selfLink: /apis/apps/v1/namespaces/ufes-monitoring/statefulsets/prometheus
+  uid: 1bda5a6a-00b0-4433-ac9d-224e2e942890
+  resourceVersion: '1031841323'
+  generation: 4
+  creationTimestamp: '2020-10-28T20:35:57Z'
+  labels:
+    app: prometheus
+    app.kubernetes.io/instance: prometheus
+    application.tess.io/name: ufesmonitoring
+    applicationinstance.tess.io/name: prometheus-statefulsets
+    chart: prometheus-11.16.4
+    component: server
+    environment.tess.io/name: production
+    heritage: Helm
+    lifecycle-state.tess.io/name: production
+    release: prometheus
+  annotations:
+    application.tess.io/id: 'urn:ebay-marketplace-consumerid:e75ab15a-c5ea-4a8a-a92e-cb29a9c9e2a0'
+    application.tess.io/name: ufesmonitoring
+    environment.tess.io/name: production
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"labels":{"app":"prometheus","app.kubernetes.io/instance":"prometheus","chart":"prometheus-11.16.4","component":"server","heritage":"Helm","release":"prometheus"},"name":"prometheus","namespace":"ufes-monitoring"},"spec":{"podManagementPolicy":"OrderedReady","replicas":2,"selector":{"matchLabels":{"app":"prometheus","component":"server","release":"prometheus"}},"serviceName":"prometheus-headless","template":{"metadata":{"annotations":{"prometheus.io/port":"10902","prometheus.io/scrape":"true"},"labels":{"app":"prometheus","chart":"prometheus-11.16.4","component":"server","heritage":"Helm","release":"prometheus"}},"spec":{"affinity":{"podAntiAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":[{"labelSelector":{"matchExpressions":[{"key":"app","operator":"In","values":["prometheus"]},{"key":"component","operator":"In","values":["server"]}]},"topologyKey":"kubernetes.io/hostname"}]}},"containers":[{"args":["--storage.tsdb.retention.time=4d","--config.file=/etc/prometheus-shared/prometheus.yml","--storage.tsdb.path=/data","--web.console.libraries=/etc/prometheus/console_libraries","--web.console.templates=/etc/prometheus/consoles","--web.enable-lifecycle","--storage.tsdb.max-block-duration=2h","--storage.tsdb.min-block-duration=2h"],"image":"ecr.vip.ebayc3.com/ufesdev/prometheus:v2.21.0","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":3,"httpGet":{"path":"/-/healthy","port":9090},"initialDelaySeconds":30,"periodSeconds":15,"successThreshold":1,"timeoutSeconds":30},"name":"prometheus-server","ports":[{"containerPort":9090}],"readinessProbe":{"failureThreshold":3,"httpGet":{"path":"/-/ready","port":9090},"initialDelaySeconds":30,"periodSeconds":5,"successThreshold":1,"timeoutSeconds":30},"resources":{"limits":{"cpu":4,"memory":"100Gi"},"requests":{"cpu":4,"memory":"100Gi"}},"volumeMounts":[{"mountPath":"/etc/config","name":"config-volume"},{"mountPath":"/data","name":"storage-volume","subPath":""},{"mountPath":"/etc/thanos/","name":"thanos-storage-secret","readOnly":false,"subPath":null},{"mountPath":"/etc/prometheus-shared/","name":"prometheus-config-shared"}]},{"args":["sidecar","--log.level=debug","--tsdb.path=/data/","--prometheus.url=http://127.0.0.1:9090","--objstore.config-file=/etc/thanos/objstore.yaml","--reloader.config-file=/etc/prometheus-config/prometheus.yml","--reloader.config-envsubst-file=/etc/prometheus-shared/prometheus.yml","--reloader.rule-dir=/etc/prometheus-config/rules"],"image":"hub.tess.io/ufesdev/thanos:v0.15.1","name":"thanos-sidecar","ports":[{"containerPort":10902,"name":"sidecar-http"},{"containerPort":10901,"name":"grpc"},{"containerPort":10900,"name":"cluster"}],"resources":{"limits":{"cpu":"2","memory":"4Gi"},"requests":{"cpu":"2","memory":"4Gi"}},"volumeMounts":[{"mountPath":"/etc/prometheus-config","name":"config-volume","readOnly":false},{"mountPath":"/data","name":"storage-volume"},{"mountPath":"/etc/thanos/","name":"thanos-storage-secret"},{"mountPath":"/etc/prometheus-shared/","name":"prometheus-config-shared","readOnly":false}]}],"enableServiceLinks":true,"securityContext":{"fsGroup":65534,"runAsGroup":65534,"runAsNonRoot":true,"runAsUser":65534},"serviceAccountName":"prometheus","terminationGracePeriodSeconds":300,"volumes":[{"configMap":{"name":"prometheus-server-config"},"name":"config-volume"},{"name":"thanos-storage-secret","secret":{"secretName":"thanos-storage-secret"}},{"emptyDir":{},"name":"prometheus-config-shared"},{"emptyDir":{"sizeLimit":"150Gi"},"name":"storage-volume"}]}}}}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prometheus
+      component: server
+      release: prometheus
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: prometheus
+        applicationinstance.tess.io/name: prometheus-statefulsets
+        chart: prometheus-11.16.4
+        component: server
+        heritage: Helm
+        release: prometheus
+      annotations:
+        prometheus.io/port: '10902'
+        prometheus.io/scrape: 'true'
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: prometheus-server-config
+            defaultMode: 420
+        - name: thanos-storage-secret
+          secret:
+            secretName: thanos-storage-secret
+            defaultMode: 420
+        - name: prometheus-config-shared
+          emptyDir: {}
+        - name: storage-volume
+          emptyDir:
+            sizeLimit: 150Gi
+      containers:
+        - name: prometheus-server
+          image: 'ecr.vip.ebayc3.com/ufesdev/prometheus:v2.21.0'
+          args:
+            - '--storage.tsdb.retention.time=4d'
+            - '--config.file=/etc/prometheus-shared/prometheus.yml'
+            - '--storage.tsdb.path=/data'
+            - '--web.console.libraries=/etc/prometheus/console_libraries'
+            - '--web.console.templates=/etc/prometheus/consoles'
+            - '--web.enable-lifecycle'
+            - '--storage.tsdb.max-block-duration=2h'
+            - '--storage.tsdb.min-block-duration=2h'
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          resources:
+            limits:
+              cpu: '4'
+              memory: 100Gi
+            requests:
+              cpu: '4'
+              memory: 100Gi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: storage-volume
+              mountPath: /data
+            - name: thanos-storage-secret
+              mountPath: /etc/thanos/
+            - name: prometheus-config-shared
+              mountPath: /etc/prometheus-shared/
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            periodSeconds: 15
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            periodSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+        - name: thanos-sidecar
+          image: 'hub.tess.io/ufesdev/thanos:v0.15.1'
+          args:
+            - sidecar
+            - '--log.level=debug'
+            - '--tsdb.path=/data/'
+            - '--prometheus.url=http://127.0.0.1:9090'
+            - '--objstore.config-file=/etc/thanos/objstore.yaml'
+            - '--reloader.config-file=/etc/prometheus-config/prometheus.yml'
+            - >-
+              --reloader.config-envsubst-file=/etc/prometheus-shared/prometheus.yml
+            - '--reloader.rule-dir=/etc/prometheus-config/rules'
+          ports:
+            - name: sidecar-http
+              containerPort: 10902
+              protocol: TCP
+            - name: grpc
+              containerPort: 10901
+              protocol: TCP
+            - name: cluster
+              containerPort: 10900
+              protocol: TCP
+          resources:
+            limits:
+              cpu: '2'
+              memory: 4Gi
+            requests:
+              cpu: '2'
+              memory: 4Gi
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/prometheus-config
+            - name: storage-volume
+              mountPath: /data
+            - name: thanos-storage-secret
+              mountPath: /etc/thanos/
+            - name: prometheus-config-shared
+              mountPath: /etc/prometheus-shared/
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 300
+      dnsPolicy: ClusterFirst
+      serviceAccountName: prometheus
+      serviceAccount: prometheus
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        fsGroup: 65534
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - prometheus
+                  - key: component
+                    operator: In
+                    values:
+                      - server
+              topologyKey: kubernetes.io/hostname
+      schedulerName: default-scheduler
+      enableServiceLinks: true
+  serviceName: prometheus-headless
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  revisionHistoryLimit: 10
+status:
+  observedGeneration: 4
+  replicas: 2
+  readyReplicas: 2
+  currentReplicas: 2
+  updatedReplicas: 2
+  currentRevision: prometheus-695948ff9d
+  updateRevision: prometheus-695948ff9d
+  collisionCount: 0

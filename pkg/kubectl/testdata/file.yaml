@@ -1,0 +1,2783 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: releases.sig-fleet.crd.tess.io
+spec:
+  group: sig-fleet.crd.tess.io
+  names:
+    kind: Release
+    plural: releases
+    singular: release
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-on-call
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-on-call
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-release-team
+  namespace: kube-system
+rules:
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: apps-assert
+rules:
+- apiGroups:
+  - identity.tess.io
+  - apps.tess.io
+  resources:
+  - groups
+  - accounts
+  - applications
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - delete
+- apiGroups:
+  - ""
+  resourceNames:
+  - yuzbai
+  - shusun
+  - shsivasubramania
+  - shrrajagopalan
+  resources:
+  - users
+  verbs:
+  - impersonate
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: daemonset-creator
+rules:
+- apiGroups:
+  - apps
+  - extensions
+  resources:
+  - daemonsets
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: ent-tools
+rules:
+- apiGroups:
+  - ""
+  - tess.io
+  - metrics.k8s.io
+  resources:
+  - resourcequotas
+  - resourcequotas/status
+  - nodepools
+  - allocationpools
+  - nodes
+  - computenodes
+  - computenodedisruptionbudgets
+  - pods/eviction
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: fed:join-legacy
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  resources:
+  - bindings
+  - componentstatuses
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  - namespaces/finalize
+  - namespaces/status
+  - nodes
+  - nodes/proxy
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - resourcequotas
+  - resourcequotas/status
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - tokenreviews
+  - subjectaccessreviews
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - certificatesigningrequests
+  - certificatesigningrequests/approval
+  - certificatesigningrequests/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - podsecuritypolicies
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - clusters
+  - clusterdeployments
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - apiservices
+  - apiservices/status
+  - controllerrevisions
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - podsecuritypolicyrequests
+  - podsecuritypolicyrequests/status
+  - podsecuritypolicyrequests/approval
+  - cachedimagerepos
+  - cachedimagerepos/status
+  - accountguards
+  - applicationguards
+  - applicationinstanceguards
+  - imageguards
+  - environmentguards
+  - runas-validatings
+  - runas-mutatings
+  - default-posixusers
+  - leases
+  - priorityclasses
+  - secrets
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - '*'
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: image-scan
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.tess.io
+  resources:
+  - applications
+  - environments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - security.tess.io
+  resources:
+  - policygroups
+  - imagepolicies
+  - whitelistedimages
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - security.tess.io
+  resources:
+  - whitelistedimages
+  - clusterwhitelistedimages
+  verbs:
+  - create
+  - update
+  - delete
+  - patch
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: managed-secrets-admin
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: monitoring-admin
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - '*'
+- apiGroups:
+  - extensions
+  resources:
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - networkpolicies
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  verbs:
+  - '*'
+- apiGroups:
+  - apps.tess.io
+  resources:
+  - applications
+  verbs:
+  - update
+  - get
+- apiGroups:
+  - policy
+  - extensions
+  resourceNames:
+  - monitoring-admin
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: namespace-admin
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - apps.tess.io
+  - ebay
+  - security.tess.io
+  - hub.tess.io
+  - identity.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  - fleet.crd.tess.io
+  - app.tess.io
+  resources:
+  - bindings
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - secrets
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - networkpolicies
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - nodepools
+  - clusters
+  - allocationpools
+  - clusterdeployments
+  - clusterosupgrades
+  - computenodes
+  - statefulsets
+  - statefulsets/status
+  - statefulsets/scale
+  - cronjobs
+  - cronjobs/status
+  - localsubjectaccessreviews
+  - controllerrevisions
+  - tessfederateddeployments
+  - federateddeployments
+  - federateddeployments/status
+  - tessfederateddeploymenttemplates
+  - applicationinstances
+  - leases
+  - tessfederatedaccesspoints
+  - nameservices
+  - posixusers
+  - posixusers/status
+  - virtletimagemappings
+  - virtletconfigmappings
+  - attestations
+  - objectconstraints
+  - releases
+  - healthmonitors
+  - releases/status
+  verbs:
+  - '*'
+- apiGroups:
+  - networking.istio.io
+  - authentication.istio.io
+  - rbac.istio.io
+  - config.istio.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - podtemplates
+  verbs:
+  - get
+  - list
+  - create
+- apiGroups:
+  - apps
+  - extensions
+  resources:
+  - daemonsets
+  verbs:
+  - update
+  - delete
+  - patch
+  - get
+  - list
+  - watch
+- apiGroups:
+  - security.tess.io
+  resources:
+  - attestations/qeapproval
+  verbs:
+  - attest
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: psp-hub-default
+rules:
+- apiGroups:
+  - policy
+  - extensions
+  resourceNames:
+  - hub-default
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: psp-pod-reaper
+rules:
+- apiGroups:
+  - policy
+  - extensions
+  resourceNames:
+  - pod-reaper
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: quota-admin
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - resourcequotas
+  verbs:
+  - update
+  - patch
+- apiGroups:
+  - tess.io
+  resources:
+  - nodepools
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sherlock-namespace-applier
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-app
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  resources:
+  - bindings
+  - componentstatuses
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  - namespaces/finalize
+  - namespaces/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - resourcequotas
+  - resourcequotas/status
+  - serviceaccounts
+  - tokenreviews
+  - subjectaccessreviews
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - accounts
+  - accounts/status
+  - applications
+  - applications/status
+  - groups
+  - groups/status
+  - podsecuritypolicyrequests
+  - clusterwhitelistedimages
+  - whitelistedimages
+  - imagepolicies
+  - tessfederateddeployments
+  - tessfederateddeploymenttemplates
+  - applicationinstances
+  - tessfederatedaccesspoints
+  - accountguards
+  - applicationguards
+  - applicationinstanceguards
+  - imageguards
+  - environmentguards
+  - runas-validatings
+  - runas-mutatings
+  - default-posixusers
+  - leases
+  - environments
+  - policygroups
+  - policygroups/status
+  - groupchangerequests
+  - groupchangerequests/status
+  - attestations
+  - objectconstraints
+  - attestationpolicies
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-core
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  resources:
+  - bindings
+  - componentstatuses
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  - namespaces/finalize
+  - namespaces/status
+  - nodes
+  - nodes/proxy
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - resourcequotas
+  - resourcequotas/status
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - tokenreviews
+  - subjectaccessreviews
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - certificatesigningrequests
+  - certificatesigningrequests/approval
+  - certificatesigningrequests/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - podsecuritypolicies
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - clusters
+  - clusterdeployments
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - apiservices
+  - apiservices/status
+  - controllerrevisions
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - podsecuritypolicyrequests
+  - podsecuritypolicyrequests/status
+  - podsecuritypolicyrequests/approval
+  - clusterwhitelistedimages
+  - whitelistedimages
+  - policygroups
+  - policygroups/status
+  - imagepolicies
+  - cachedimagerepos
+  - cachedimagerepos/status
+  - accountguards
+  - applicationguards
+  - applicationinstanceguards
+  - imageguards
+  - environmentguards
+  - runas-validatings
+  - runas-mutatings
+  - default-posixusers
+  - leases
+  - priorityclasses
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-fleet-reader
+rules:
+- apiGroups:
+  - sig-fleet.crd.tess.io
+  - fleet.crd.tess.io
+  resources:
+  - releases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - app.tess.io
+  resources:
+  - healthmonitors
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-fleet
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  resources:
+  - bindings
+  - componentstatuses
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  - namespaces/finalize
+  - namespaces/status
+  - nodes
+  - nodes/proxy
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - persistentvolumes
+  - persistentvolumes/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - resourcequotas
+  - resourcequotas/status
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - tokenreviews
+  - subjectaccessreviews
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - certificatesigningrequests
+  - certificatesigningrequests/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - nodepools
+  - clusters
+  - allocationpools
+  - clusterdeployments
+  - computenodes
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - controllerrevisions
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - volumeattachments
+  - default-posixusers
+  - leases
+  - posixusers
+  - posixusers/status
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-host-runtime
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  resources:
+  - bindings
+  - componentstatuses
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - nodes
+  - nodes/proxy
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - persistentvolumes
+  - persistentvolumes/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - tokenreviews
+  - subjectaccessreviews
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - certificatesigningrequests
+  - certificatesigningrequests/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - storageclasses
+  - nodepools
+  - clusterosupgrades
+  - computenodes
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - volumeattachments
+  - virtletimagemappings
+  - virtletconfigmappings
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-network-read-all
+rules:
+- apiGroups:
+  - ""
+  - extensions
+  - networking.k8s.io
+  - apps.tess.io
+  - network.tess.io
+  resources:
+  - services
+  - services/proxy
+  - services/status
+  - networkpolicy
+  - ingresses
+  - ingresses/status
+  - tessfederatedaccesspoints
+  - nameservices
+  - loadbalancerservices
+  - lbmsservices
+  - fpaendpoints
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - networking.istio.io
+  - authentication.istio.io
+  - rbac.istio.io
+  - config.istio.io
+  resources:
+  - '*'
+  verbs:
+  - get
+  - watch
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-network
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  - network.tess.io
+  resources:
+  - configmaps
+  - endpoints
+  - events
+  - nodes
+  - nodes/proxy
+  - nodes/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - certificatesigningrequests
+  - certificatesigningrequests/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - networkpolicies
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - allocationpools
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - tessfederatedaccesspoints
+  - nameservices
+  - posixusers
+  - posixusers/status
+  - environments
+  - policygroups
+  - policygroups/status
+  - groupchangerequests
+  - loadbalancerservices
+  - lbmsservices
+  verbs:
+  - '*'
+- apiGroups:
+  - networking.istio.io
+  - authentication.istio.io
+  - rbac.istio.io
+  - config.istio.io
+  - crd.projectcalico.org
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-on-call
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - clusterregistry.k8s.io
+  - etcd.database.coreos.com
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  resources:
+  - bindings
+  - clusters
+  - componentstatuses
+  - configmaps
+  - endpoints
+  - etcdclusters
+  - events
+  - limitranges
+  - namespaces
+  - namespaces/finalize
+  - namespaces/status
+  - nodes
+  - nodes/proxy
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - persistentvolumes
+  - persistentvolumes/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - resourcequotas
+  - resourcequotas/status
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - tokenreviews
+  - subjectaccessreviews
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - jobs
+  - jobs/status
+  - certificatesigningrequests
+  - certificatesigningrequests/approval
+  - certificatesigningrequests/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - networkpolicies
+  - podsecuritypolicies
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - rolebindings
+  - roles
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - storageclasses
+  - nodepools
+  - clusters
+  - allocationpools
+  - clusterdeployments
+  - clusterosupgrades
+  - computenodes
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - apiservices
+  - apiservices/status
+  - controllerrevisions
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - volumeattachments
+  - accounts
+  - accounts/status
+  - applications
+  - applications/status
+  - groups
+  - groups/status
+  - podsecuritypolicyrequests
+  - podsecuritypolicyrequests/status
+  - podsecuritypolicyrequests/approval
+  - clusterwhitelistedimages
+  - whitelistedimages
+  - imagepolicies
+  - cachedimagerepos
+  - cachedimagerepos/status
+  - tessfederateddeployments
+  - tessfederateddeploymenttemplates
+  - applicationinstances
+  - tessfederatedaccesspoints
+  - nameservices
+  - accountguards
+  - applicationguards
+  - applicationinstanceguards
+  - imageguards
+  - environmentguards
+  - runas-validatings
+  - runas-mutatings
+  - default-posixusers
+  - leases
+  - tessfederatedaccesspoints
+  - nameservices
+  - priorityclasses
+  - posixusers
+  - posixusers/status
+  - environments
+  - policygroups
+  - policygroups/status
+  - groupchangerequests
+  - groupchangerequests/status
+  - groupchangerequests/ownerapproval
+  - groupchangerequests/managerapproval
+  - virtletimagemappings
+  - virtletconfigmappings
+  - attestations
+  - objectconstraints
+  verbs:
+  - '*'
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - put
+- apiGroups:
+  - networking.istio.io
+  - authentication.istio.io
+  - rbac.istio.io
+  - config.istio.io
+  - network.tess.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:fpaendpoint-controller
+rules:
+- apiGroups:
+  - ""
+  - network.tess.io
+  resources:
+  - pods
+  - fpaendpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  - network.tess.io
+  resources:
+  - pods
+  - fpaendpoints
+  - events
+  - configmaps
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:imagecache-controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - hub.tess.io
+  resources:
+  - cachedimagerepos
+  - cachedimagerepos/status
+  verbs:
+  - update
+  - patch
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:ingress-controller
+rules:
+- apiGroups:
+  - ""
+  - extensions
+  attributeRestrictions: null
+  resources:
+  - events
+  - ingresses
+  - services
+  - endpoints
+  - pods
+  - podtemplates
+  - replicationcontrollers
+  - deployments
+  - configmaps
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  attributeRestrictions: null
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:tess-cms-controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - namespaces
+  - endpoints
+  verbs:
+  - update
+  - patch
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ebay
+  - apps.tess.io
+  - network.tess.io
+  resources:
+  - '*'
+  verbs:
+  - update
+  - patch
+  - get
+  - list
+  - watch
+- apiGroups:
+  - tess.io
+  - extensions
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tessnet-ip-tainter
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - update
+  - patch
+  - get
+  - watch
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tre
+rules:
+- apiGroups:
+  - ""
+  - apps
+  - authentication.k8s.io
+  - authorization.k8s.io
+  - autoscaling
+  - batch
+  - certificates.k8s.io
+  - extensions
+  - policy
+  - rbac.authorization.k8s.io
+  - storage.k8s.io
+  - tess.io
+  - apiregistration.k8s.io
+  - apiextensions.k8s.io
+  - networking.k8s.io
+  - admissionregistration.k8s.io
+  - events.k8s.io
+  - ebay
+  - apps.tess.io
+  - security.tess.io
+  - identity.tess.io
+  - hub.tess.io
+  - admission.tess.io
+  - scheduling.k8s.io
+  - coordination.k8s.io
+  - virtlet.k8s
+  - etcd.database.coreos.com
+  - networking.istio.io
+  - network.tess.io
+  - crd.projectcalico.org
+  - toby.tess.io
+  resources:
+  - bindings
+  - componentstatuses
+  - configmaps
+  - endpoints
+  - events
+  - limitranges
+  - namespaces
+  - namespaces/finalize
+  - namespaces/status
+  - nodes
+  - nodes/proxy
+  - nodes/status
+  - persistentvolumeclaims
+  - persistentvolumeclaims/status
+  - persistentvolumes
+  - persistentvolumes/status
+  - pods
+  - pods/attach
+  - pods/binding
+  - pods/eviction
+  - pods/exec
+  - pods/log
+  - pods/portforward
+  - pods/proxy
+  - pods/status
+  - podtemplates
+  - replicationcontrollers
+  - replicationcontrollers/scale
+  - replicationcontrollers/status
+  - resourcequotas
+  - resourcequotas/status
+  - serviceaccounts
+  - services
+  - services/proxy
+  - services/status
+  - tokenreviews
+  - subjectaccessreviews
+  - horizontalpodautoscalers
+  - horizontalpodautoscalers/status
+  - daemonsets
+  - daemonsets/status
+  - deployments
+  - deployments/rollback
+  - deployments/scale
+  - deployments/status
+  - ingresses
+  - ingresses/status
+  - networkpolicies
+  - replicasets
+  - replicasets/scale
+  - replicasets/status
+  - poddisruptionbudgets
+  - poddisruptionbudgets/status
+  - selfsubjectaccessreviews
+  - statefulsets
+  - statefulsets/scale
+  - storageclasses
+  - nodepools
+  - clusters
+  - allocationpools
+  - clusterdeployments
+  - clusterosupgrades
+  - computenodes
+  - cronjobs
+  - cronjobs/status
+  - statefulsets/status
+  - localsubjectaccessreviews
+  - apiservices
+  - apiservices/status
+  - controllerrevisions
+  - customresourcedefinitions
+  - customresourcedefinitions/status
+  - selfsubjectrulesreviews
+  - validatingwebhookconfigurations
+  - mutatingwebhookconfigurations
+  - volumeattachments
+  - applications
+  - applications/status
+  - clusterwhitelistedimages
+  - whitelistedimages
+  - imagepolicies
+  - cachedimagerepos
+  - cachedimagerepos/status
+  - tessfederateddeployments
+  - tessfederateddeploymenttemplates
+  - applicationinstances
+  - tessfederatedaccesspoints
+  - nameservices
+  - leases
+  - tessfederatedaccesspoints
+  - nameservices
+  - priorityclasses
+  - posixusers
+  - posixusers/status
+  - virtletimagemappings
+  - virtletconfigmappings
+  - attestations
+  - objectconstraints
+  - etcdclusters
+  - loadbalancerservices
+  - lbmsservices
+  - destinationrules
+  - envoyfilters
+  - globalnetworkpolicies
+  - tobyuserdatas
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups: []
+  nonResourceURLs:
+  - '*'
+  verbs:
+  - delete
+  - get
+  - post
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-on-call
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tess-on-call
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: mlowery
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yingkliu
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: namespace-creator
+  namespace: hub
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: namespace-admin
+subjects:
+- kind: User
+  name: haibzhou
+- kind: User
+  name: haolin
+- kind: User
+  name: xiaojuwang
+- kind: ServiceAccount
+  name: releaser
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: psp-hub-default
+  namespace: hub
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: psp-hub-default
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: hub
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-on-call
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tess-on-call
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: mlowery
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yingkliu
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-release-team
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tess-release-team
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: achu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yyang27
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yepan
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: daemonset-creator
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: daemonset-creator
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: sig-monitoring_admin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: namespace-creator
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: namespace-admin
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: monitoring
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: sig-monitoring_admin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: namespace-creator
+  namespace: quota-management
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: namespace-admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: vkakadiya
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: hualin
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: leiyang
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: dhanramesh
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: mnichols
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: vsokolov
+- kind: ServiceAccount
+  name: quota-manage-acc
+  namespace: quota-management
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: assert-apps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: apps-assert
+subjects:
+- kind: ServiceAccount
+  name: apps-assert
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  labels:
+    applier: kubectl-apply-7355
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: cluster-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:masters
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: ent-tools
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ent-tools
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: hualin
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: vkakadiya
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: leiyang
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: zwang7
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: gcusumano
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: jescarcega
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: dhanramesh
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: mnichols
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: vsokolov
+- kind: ServiceAccount
+  name: quota-manage-acc
+  namespace: quota-management
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: fed:join-legacy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: fed:join-legacy
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: mlowery
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: image-scan
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: image-scan
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: imagescan
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: managed-secrets-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: managed-secrets-admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: client-admission-apiserver
+- kind: ServiceAccount
+  name: default
+  namespace: trfcontroller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: monitoring-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: monitoring-admin
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: monitoring
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: sig-monitoring_admin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sherlock-namespace-applier
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sherlock-namespace-applier
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: ump-monitoring_admin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-app
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sig-app
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: shsivasubramania
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: fenyi
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yuzbai
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: shusun
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-core
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sig-core
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: mlowery
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yingnzhang
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: jianqli
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-fleet-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sig-fleet-reader
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:authenticated
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-fleet
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sig-fleet
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: xima
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: xiaoli2
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: panli
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: shiqian
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: guohchen
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: jxiaobin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-host-runtime
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sig-host-runtime
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: chengyli
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yingkliu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: wenlxie
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: fesu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: wenjgao
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-network-read-all
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sig-network-read-all
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:authenticated
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: sig-network
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sig-network
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: spothanis
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: ndixitlimaye
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: fmeng
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: chenxma
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: youchen
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: qinxu4
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: dongtan
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: lhuang8
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: sumurthy
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: zhenhfeng
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "false"
+  labels:
+    applier: kubectl-apply-7355
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: tess-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tess-admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: client-kubeup
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess-on-call
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tess-on-call
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: mlowery
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yingkliu
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:fpaendpoint-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tess:controller:fpaendpoint-controller
+subjects:
+- kind: ServiceAccount
+  name: fpacontroller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:imagecache-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tess:controller:imagecache-controller
+subjects:
+- kind: ServiceAccount
+  name: imagecache-controller
+  namespace: hub
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:ingress-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tess:controller:ingress-controller
+subjects:
+- kind: ServiceAccount
+  name: ingress-controller
+  namespace: ingress
+- kind: ServiceAccount
+  name: default
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tess:controller:tess-cms-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tess:controller:tess-cms-controller
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: models
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tessnet-ip-tainter-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tessnet-ip-tainter
+subjects:
+- kind: ServiceAccount
+  name: tnet-tainter
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: tre
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tre
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: liycheng
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: achu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: gadai
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: ddeshpande
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: jiawgu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: junzlin
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yongrlin
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yanliu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: nliu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: cmei
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yepan
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: xiaojuwang
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: lozhao
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: jiangyu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: haolin
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: shaoxu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yuxinzheng
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: zhibzhou
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: _tre_serviceaccount
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: ywu2
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yyang27
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: yuqtu
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: bbompastor
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: git-apply
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: git-apply
+  template:
+    metadata:
+      labels:
+        app: git-apply
+    spec:
+      containers:
+      - args:
+        - -repo=https://github.com/eBay/releaser.git
+        - -root=/git
+        - -username=oauth2
+        - -webhook-url=http://127.0.0.1:8080
+        - -webhook-timeout=5m
+        - -wait=600
+        command:
+        - /git-sync
+        env:
+        - name: GIT_SYNC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: token
+              name: git-pull-access-token
+        image: hub.tess.io/kubernetes/git-apply:v0.0.1
+        imagePullPolicy: Always
+        name: git-sync
+        volumeMounts:
+        - mountPath: /git
+          name: root
+      - args:
+        - -target=/git/sig-security.git/clusters/101/target.yaml
+        - -port=8080
+        command:
+        - /git-apply
+        image: hub.tess.io/kubernetes/git-apply:v0.0.1
+        imagePullPolicy: Always
+        name: git-apply
+        volumeMounts:
+        - mountPath: /git
+          name: root
+      serviceAccount: clusterrole-aggregation-controller
+      volumes:
+      - emptyDir: {}
+        name: root
+---
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: monitoring-admin
+spec:
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - AUDIT_READ
+  - AUDIT_CONTROL
+  allowedHostPaths:
+  - pathPrefix: /mnt/kubelet/pods
+    readOnly: true
+  - pathPrefix: /var/lib/docker/containers
+    readOnly: true
+  - pathPrefix: /var/lib/runtime
+    readOnly: true
+  - pathPrefix: /var/log
+  - pathPrefix: /bin
+    readOnly: true
+  - pathPrefix: /etc
+    readOnly: true
+  - pathPrefix: /usr/bin
+    readOnly: true
+  - pathPrefix: /usr/sbin
+    readOnly: true
+  - pathPrefix: /sbin
+    readOnly: true
+  - pathPrefix: /run/containerd
+    readOnly: true
+  - pathPrefix: /var/containerd
+    readOnly: true
+  fsGroup:
+    rule: RunAsAny
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  hostPorts:
+  - max: 65535
+    min: 0
+  privileged: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+---
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: nudataadmin
+spec:
+  allowPrivilegeEscalation: true
+  allowedCapabilities:
+  - SYS_ADMIN
+  allowedHostPaths:
+  - pathPrefix: /dev/zfs
+    readOnly: true
+  - pathPrefix: /dev/zvol
+  - pathPrefix: /etc/zfs
+  fsGroup:
+    rule: RunAsAny
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  hostPorts:
+  - max: 65535
+    min: 0
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+---
+apiVersion: extensions/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: pod-reaper
+spec:
+  allowPrivilegeEscalation: true
+  allowedHostPaths:
+  - pathPrefix: /etc/openssl
+    readOnly: true
+  - pathPrefix: /etc/pki
+    readOnly: true
+  - pathPrefix: /etc/ssl
+    readOnly: true
+  - pathPrefix: /usr/local/openssl
+    readOnly: true
+  - pathPrefix: /var/ssl
+    readOnly: true
+  fsGroup:
+    rule: RunAsAny
+  hostIPC: true
+  hostNetwork: true
+  hostPID: true
+  hostPorts:
+  - max: 65535
+    min: 0
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'
+---
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  labels:
+    applier: kubectl-apply-7355
+  name: hub-default
+spec:
+  allowPrivilegeEscalation: false
+  allowedHostPaths:
+  - pathPrefix: /etc/pki
+    readOnly: true
+  - pathPrefix: /etc/ssl
+    readOnly: true
+  - pathPrefix: /etc
+  fsGroup:
+    rule: RunAsAny
+  hostIPC: false
+  hostNetwork: true
+  hostPID: false
+  hostPorts: []
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - '*'

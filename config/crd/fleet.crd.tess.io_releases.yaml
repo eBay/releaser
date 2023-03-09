@@ -1,0 +1,246 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: releases.fleet.crd.tess.io
+spec:
+  group: fleet.crd.tess.io
+  names:
+    kind: Release
+    listKind: ReleaseList
+    plural: releases
+    shortNames:
+    - re
+    singular: release
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.repository
+      name: Repository
+      type: string
+    - jsonPath: .status.commit
+      name: Commit
+      type: string
+    - jsonPath: .status.version
+      name: Version
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Release represents the desired state for a certain component
+          by referencing its git repository at a specific commit.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ReleaseSpec defines the components which consist of a Release.
+              Each release has a Runner deployment which is created from this ReleaseSpec.
+            properties:
+              branch:
+                description: Branch is the branch which we should pull from. Default
+                  to master.
+                type: string
+              deployer:
+                description: Deployer specifies how to deploy this release. It may
+                  support multiple deployment options like kubectl or helm. Only one
+                  option can be set.
+                properties:
+                  configuration:
+                    description: Configuration is path to the configuration file.
+                      The format is defined by each of the individual plugins, and
+                      it is recommended to version its definition to improve compatibility.
+                    type: string
+                  dryRun:
+                    description: DryRun if set to true indicates that this release
+                      isn't expected to make real changes. The dryRun semantic is
+                      deployer specific. If the deployer doesn't support dry run mode,
+                      it should report failure by setting condition in status. Besides,
+                      checker and approver routines won't be triggered, either.
+                    type: boolean
+                  name:
+                    description: 'Name is the plugin name, for example: kubectl:v1.15.6.
+                      The name also indicates the image name when configuring the
+                      deployer container. The mapping is done like below: kubectl
+                      => hub.github.com/ebay/releaser/kubectl:latest helm@v0.4.0 =>
+                      hub.github.com/ebay/releaser/helm:v0.4.0 hub.github.com/ebay/releaser/tess:v0.4.4
+                      => hub.github.com/ebay/releaser/tess:v0.4.4'
+                    type: string
+                  parameters:
+                    additionalProperties:
+                      type: string
+                    description: Parameters are unstructured inline configuration
+                      for deployer. The usage of these values is deployer dependent.
+                    type: object
+                  reconcile:
+                    description: Reconcile is a flag to tell releaser whether to reconcile
+                      this release actively. If this is not set or is false, the deployer
+                      won't try to deploy again when the commit id is the same and
+                      its phase has entered Succeeded or Failed. When set to be true,
+                      even when the commit ID is the same and its phase is in Succeeded
+                      and Failed, the deployer will still try to see whether there
+                      is a difference between source and live specs, and when there
+                      is difference, it triggers the deployment flow once again. Be
+                      noted, when the release is not in Succeeded/Failed phase, we
+                      may still retry the deployment no matter whether this is true
+                      or not.
+                    type: boolean
+                  timeout:
+                    description: Timeout specifies how long it can take to run this
+                      deployment. The default value is 20 minutes.
+                    type: string
+                type: object
+              disabled:
+                description: Disabled if set to true indicates that this release shouldn't
+                  be worked on. This can be used in emergency case when people want
+                  to fix issues manually.
+                type: boolean
+              excludes:
+                description: Excludes specifies the directory or files that should
+                  be skipped.
+                items:
+                  type: string
+                type: array
+              includes:
+                description: Includes specifies the directory or files that should
+                  be checked out.
+                items:
+                  type: string
+                type: array
+              repository:
+                description: Repository is the name of git repository, it is normally
+                  like <org>/<name>.
+                type: string
+              revision:
+                description: Revision specifies the revision which we should deploy
+                  from. Default to HEAD.
+                type: string
+              revisionHistoryLimit:
+                description: RevisionHistoryLimit is the maximum number of revisions
+                  that will be maintained in the Release's revision history. The revision
+                  history consists of all revisions not represented by a currently
+                  applied Release version. The default value is 10.
+                format: int32
+                type: integer
+              secretRef:
+                description: SecretRef is a reference to secret where access token
+                  and gpg key are defined. The secret could specify keys `token` and
+                  optionally `gpg.key`. If token key is specified, then the repository
+                  will be pulled with it. If gpg.key is specified, and repository
+                  is encrypted, the key will be used to run decryption. If left unspecified,
+                  the default tokens and gpg.key will be used.
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
+              serviceAccountName:
+                description: ServiceAccountName specifies the identity used during
+                  the lifecycle of this release. The identity may be used to run deployer
+                  and approver. The token of this service account will be translated
+                  into a secret. If unspecified, default service account is used.
+                type: string
+            required:
+            - deployer
+            - repository
+            type: object
+          status:
+            description: ReleaseStatus captures the status.
+            properties:
+              commit:
+                description: Commit is the current commit id which is already applied.
+                  It is empty if there is nothing applied yet.
+                type: string
+              conditions:
+                description: Conditions tracks the varies of status of conditions.
+                items:
+                  description: ReleaseCondition represents runner's condition.
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another.
+                      format: date-time
+                      type: string
+                    message:
+                      description: Human-readable message indicating details about
+                        last transition.
+                      type: string
+                    reason:
+                      description: Unique, one-word, CamelCase reason for the condition's
+                        last transition.
+                      type: string
+                    status:
+                      description: Status is the status of the condition. Can be True,
+                        False, Unknown.
+                      type: string
+                    type:
+                      description: Type is the type of the condition.
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              deployerStatus:
+                description: 'DeployerStatus tells the information about deployer
+                  status. TODO: rename it since a release now consists of deployer
+                  and approver together.'
+                properties:
+                  cluster:
+                    type: string
+                  deploymentName:
+                    type: string
+                  namespace:
+                    type: string
+                  phase:
+                    description: DeployerPhase describes the current phase of deployer.
+                    type: string
+                  secretName:
+                    type: string
+                type: object
+              observedGeneration:
+                description: The most recent generation observed by the release controller.
+                  If the value is less than metadata.generation, the value of phase
+                  can not be trusted. In another word, if the observedGeneration equals
+                  to metadata generation, then phase must be correct.
+                format: int64
+                type: integer
+              parametersHash:
+                description: ParametersHash is the sha256 value of applied parameters.
+                  This value determines whether the parameters are changed.
+                type: string
+              phase:
+                description: Phase describes the current release phase.
+                type: string
+              version:
+                description: Version declares the logical release version information.
+                  The applier looks for a VERSION file from the repository root and
+                  update it here. Otherwise, this field is left as empty. This information
+                  is consumed when there is dependency check required.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

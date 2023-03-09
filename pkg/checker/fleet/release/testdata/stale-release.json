@@ -1,0 +1,71 @@
+{
+  "apiVersion": "fleet.crd.tess.io/v1alpha1",
+  "kind": "Release",
+  "metadata": {
+    "creationTimestamp": "2020-04-04T06:45:54Z",
+    "finalizers": [
+      "fleet.crd.tess.io/released"
+    ],
+    "generation": 2,
+    "name": "sample",
+    "namespace": "kube-system",
+    "resourceVersion": "5682051",
+    "selfLink": "/apis/fleet.crd.tess.io/v1alpha1/namespaces/kube-system/releases/sample",
+    "uid": "acd7ecaa-4cc2-4294-8038-43c720f48a65"
+  },
+  "spec": {
+    "deployer": {
+      "kubectl": {
+        "path": "configmaps"
+      }
+    },
+    "repository": "https://github.corp.ebay.com/tessops/sample",
+    "revision": "HEAD",
+    "secretRef": {
+      "name": "gittokens"
+    },
+    "serviceAccountName": "default"
+  },
+  "status": {
+    "commit": "196a58433abd5b324e7ce4564ef24d101e793d78",
+    "conditions": [
+      {
+        "lastTransitionTime": "2020-04-04T06:47:03Z",
+        "message": "deployment sample-kzhkp is running in namespace kube-system",
+        "reason": "Running",
+        "status": "True",
+        "type": "DeployerRunning"
+      },
+      {
+        "lastTransitionTime": "2020-04-04T20:23:49Z",
+        "message": "deployment sample-kzhkp is ready in namespace kube-system",
+        "reason": "Ready",
+        "status": "True",
+        "type": "DeployerReady"
+      },
+      {
+        "lastTransitionTime": "2020-04-04T20:23:54Z",
+        "message": "196a58433abd5b324e7ce4564ef24d101e793d78 is deployed",
+        "reason": "Deployed",
+        "status": "True",
+        "type": "ReleaseDeployed"
+      },
+      {
+        "lastTransitionTime": "2020-04-04T20:24:54Z",
+        "message": "196a58433abd5b324e7ce4564ef24d101e793d78 is checked",
+        "reason": "Checked",
+        "status": "True",
+        "type": "ReleaseChecked"
+      }
+    ],
+    "deployerStatus": {
+      "cluster": "kind",
+      "deploymentName": "sample-kzhkp",
+      "namespace": "kube-system",
+      "phase": "Running",
+      "secretName": "sample-l69kp"
+    },
+    "observedGeneration": 1,
+    "phase": "Succeeded"
+  }
+}

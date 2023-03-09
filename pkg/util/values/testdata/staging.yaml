@@ -1,0 +1,4 @@
+foo: hub.tess.io/myapp/foo:v0.2
+replicas: 3
+service:
+  type: NodePort

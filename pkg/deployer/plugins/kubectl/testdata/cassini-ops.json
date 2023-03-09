@@ -1,0 +1,37 @@
+{
+  "apiVersion": "rbac.authorization.k8s.io/v1",
+  "kind": "Role",
+  "metadata": {
+    "creationTimestamp": "2020-06-02T01:31:07Z",
+    "deletionGracePeriodSeconds": 0,
+    "deletionTimestamp": "2020-10-09T03:42:29Z",
+    "finalizers": [
+      "foo.tess.io/bar"
+    ],
+    "labels": {
+      "applier": "kubectl-apply-7355"
+    },
+    "name": "cassini-ops",
+    "namespace": "default",
+    "resourceVersion": "278433681",
+    "selfLink": "/apis/rbac.authorization.k8s.io/v1/namespaces/default/roles/cassini-ops",
+    "uid": "bba7b8be-a470-11ea-ace4-766c93e230fb"
+  },
+  "rules": [
+    {
+      "apiGroups": [
+        "infra.tess.io"
+      ],
+      "resources": [
+        "computeassets"
+      ],
+      "verbs": [
+        "get",
+        "list",
+        "watch",
+        "patch",
+        "update"
+      ]
+    }
+  ]
+}

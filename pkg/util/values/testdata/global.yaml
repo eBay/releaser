@@ -1,0 +1,6 @@
+foo: hub.tess.io/myapp/foo:v0.1
+replicas: 3
+service:
+  type: LoadBalancer
+addresses:
+  lvs: foo.ebay.com,bar.ebay.com

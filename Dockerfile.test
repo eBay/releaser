@@ -1,0 +1,4 @@
+FROM ghcr.io/ebay/releaser/gobuild:v1.19
+WORKDIR /go/src/github.com/ebay/releaser
+ADD . .
+RUN bash /test.sh .

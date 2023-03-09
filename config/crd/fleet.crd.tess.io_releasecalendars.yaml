@@ -1,0 +1,228 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: releasecalendars.fleet.crd.tess.io
+spec:
+  group: fleet.crd.tess.io
+  names:
+    kind: ReleaseCalendar
+    listKind: ReleaseCalendarList
+    plural: releasecalendars
+    shortNames:
+    - rcal
+    singular: releasecalendar
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.templateRef.name
+      name: Template
+      type: string
+    - jsonPath: .spec.paused
+      name: Paused
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha2
+    schema:
+      openAPIV3Schema:
+        description: ReleaseCalendar describes a Release arragement from calendar
+          view.
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ReleaseCalendarSpec describes how and when this calendar
+              should be executed.
+            properties:
+              concurrentPolicy:
+                description: ConcurrencePolicy specifies what happens to an old Pending
+                  event when new events with the same name get created. If this is
+                  not specified, the new event will wait for the old event to be done
+                  (Completed, Failed or Cancelled)
+                type: string
+              groupPolicy:
+                description: GroupPolicy defines the policy of grouping events' execution
+                type: string
+              hours:
+                description: Hours specifies the hours when release events can execute.
+                  This usually aligns with working hours, for e.g, 9:00AM-05:00PM.
+                items:
+                  description: ReleaseCalendarHour specifies a range of time that
+                    this calendar considers as active time periods.
+                  properties:
+                    from:
+                      description: From specifies the starting hour of the day. For
+                        e.g, 10 means 10AM. If unset or set to 0, it means the begining
+                        of the day.
+                      format: int64
+                      maximum: 47
+                      minimum: 0
+                      type: integer
+                    params:
+                      description: Params specifies the parameters that should be
+                        applied to all Events in this time range.
+                      items:
+                        description: Param is a key value pair which can consumed
+                          in PipelineRuns for all Release Events.
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - name
+                        - value
+                        type: object
+                      type: array
+                    to:
+                      description: To specifies the end hour of the day. For e.g,
+                        17 means 5PM. If To is greater or equal to 24, the hour falls
+                        into the second day.
+                      format: int64
+                      maximum: 47
+                      minimum: 0
+                      type: integer
+                  required:
+                  - from
+                  - to
+                  type: object
+                type: array
+              params:
+                description: Params is a list of Name-Value pairs that will be passed
+                  as parameters to all the PipelineRuns.
+                items:
+                  description: Param is a key value pair which can consumed in PipelineRuns
+                    for all Release Events.
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
+              paused:
+                description: Paused when set to true, the execution of this Event
+                  should stop. All the running PipelineRuns will still run till completion.
+                type: boolean
+              pipelines:
+                description: Pipelines describes a sequential Pipelines that should
+                  be executed for each ReleaseEvent.
+                items:
+                  description: ReleaseCalendarPipeline specifies how and when a PipelineRun
+                    should be executed.
+                  properties:
+                    afterPolicy:
+                      description: AfterPolicy specifies whether the execution of
+                        this Pipeline should honor event After settings. If this set
+                        to Always and A has B as after, then this Pipeline for event
+                        A can only run when event B finishes the same Pipeline.
+                      type: string
+                    name:
+                      description: Name is a key to the specified TemplateRef.
+                      type: string
+                    rollback:
+                      description: Rollback is a key to the specified TemplateRef.
+                        The template is used to create PipelineRun that is meant for
+                        rollback.
+                      type: string
+                    rollbackPolicy:
+                      description: RollbackPolicy specifies when the rollback PipelineRun
+                        should run. This could be Auto so that rollback will happen
+                        automatically on failure, or if set to None, then this rollback
+                        Pipeline can only be triggered manually.
+                      type: string
+                    runPolicy:
+                      description: 'RunPolicy specifies the policy for this Pipeline.
+                        It might be: 1. LeaderOnly: This Pipeline is only executed
+                        on leader events. 2. Always: This Pipeline should be executed
+                        for all events.'
+                      type: string
+                    timeOffset:
+                      description: 'TimeOffset specifies the relative time from the
+                        scheduled event Time. There are two formats supported: 1.
+                        "-6h": This Pipeline should be executed 6 hours ahead. 2.
+                        "-1d,10:00": This Pipeline should be exeucted at 10:00am from
+                        the previous day.'
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              skipDays:
+                description: SkipDays specifies the days when releaseevents shouldn't
+                  be scheduled.
+                items:
+                  type: string
+                type: array
+              templateRef:
+                description: TemplateRef specifies the available PipelineRun templates.
+                  Usually it is a ConfigMap, and each key in this ConfigMap can represent
+                  one stage of each event.
+                properties:
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
+              timeZone:
+                anyOf:
+                - type: integer
+                - type: string
+                description: TimeZone specifies the applicable timezone. For, e.g
+                  -8 means PST.
+                x-kubernetes-int-or-string: true
+              weekdays:
+                description: Weekdays specifies the weekdays when releaseevents can
+                  be scheduled.
+                items:
+                  properties:
+                    from:
+                      description: From specifies the start day of week. For e.g,
+                        0 means Sunday.
+                      format: int64
+                      maximum: 6
+                      minimum: 0
+                      type: integer
+                    to:
+                      description: To specifies the end day of week. For e.g, 4 means
+                        Thursday.
+                      format: int64
+                      maximum: 6
+                      minimum: 0
+                      type: integer
+                  required:
+                  - from
+                  - to
+                  type: object
+                type: array
+            required:
+            - pipelines
+            - templateRef
+            - timeZone
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}

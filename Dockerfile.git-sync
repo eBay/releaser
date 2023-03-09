@@ -1,0 +1,25 @@
+FROM golang:1.19.7
+WORKDIR /go/src/github.com/ebay/releaser
+ADD . .
+RUN GO111MODULE=off go install github.com/ebay/releaser/cmd/git-sync
+
+FROM debian:buster-slim
+RUN apt-get update \
+  && apt-get install -y -qq patch make g++ curl libssl-dev \
+  && rm -rf /var/lib/apt/lists/*
+ADD hack/patches/git-crypt.patch /tmp/git-crypt.patch
+RUN curl -L -o git-crypt.tar.gz https://github.com/AGWA/git-crypt/archive/0.6.0.tar.gz \
+  && tar xzf git-crypt.tar.gz && cd git-crypt-0.6.0 \
+  && patch -p1 < /tmp/git-crypt.patch && make && make install
+
+FROM debian:bullseye-slim
+RUN apt-get update \
+  && apt-get install -y -qq git curl ca-certificates openssl gpg \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+RUN echo "git-sync:x:65533:65533::/tmp:/sbin/nologin" >> /etc/passwd
+COPY --from=0 /go/bin/git-sync /usr/bin/git-sync
+COPY --from=1 /usr/local/bin/git-crypt /usr/bin/git-crypt
+ENTRYPOINT [ "git-sync" ]
+RUN useradd -Ms /bin/bash -u 1000 app
+USER 1000
