@@ -545,7 +545,8 @@ func (c *Controller) syncHandler(key string) error {
 	// when the secret is not a managed secret.
 	// When a release spec uses managed secret, it must also be running in
 	// user's namespace. (see check above)
-	if !managedSecret {
+	_, found := refSecret.Data[KeyKubeconfig]
+	if !managedSecret && !found {
 		configBytes, err := c.buildKubeConfig(namespace, serviceAccountName)
 		if err != nil {
 			c.recorder.Eventf(release, corev1.EventTypeWarning, "FailedKubeconfig", "failed to build kubeconfig: %s", err)
