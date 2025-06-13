@@ -1,4 +1,4 @@
-FROM golang:1.19.7
+FROM golang:1.25rc1
 RUN apt-get update && apt-get install -y unzip
 ENV GO111MODULE on
 RUN git clone https://github.com/kubernetes/code-generator.git /go/src/k8s.io/code-generator \
@@ -18,7 +18,7 @@ RUN PROTOBUF_VERSION=3.14.0; ZIPNAME="protoc-${PROTOBUF_VERSION}-linux-x86_64.zi
   && rm -rf /tmp/protoc \
   && protoc --version
 
-FROM golang:1.19.7
+FROM golang:1.25rc1
 COPY --from=0 /go/src/k8s.io/code-generator /go/src/k8s.io/code-generator
 COPY --from=0 /go/bin/ /go/bin
 COPY --from=0 /usr/local/bin /usr/local/bin
